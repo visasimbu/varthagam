@@ -181,3 +181,6 @@ $RECYCLE.BIN/
 cov_html
 
 # End of https://www.gitignore.io/api/osx,linux,macos,python,windows
+
+#IDEA
+.idea
