@@ -133,14 +133,11 @@ def get_positions(kite):
     try:
         print('In getting positions')
         data = pd.DataFrame(kite.positions()["net"])
-        # data = data["net"]
-        print(data)
-        print("....888888888888.")
-        print(data.describe())
-        print(data.info())
+        # print(data.describe())
+        # print(data.info())
         # data = data[data["tag"] == "FromPython"]
         data = data.filter(
-            ["tradingsymbol","instrument_token","product",
+            ["tradingsymbol",
              "quantity","overnight_quantity","multiplier","average_price",
              "close_price","last_price","value","pnl","m2m","unrealised",
              "realised","buy_quantity","buy_price","buy_value",
@@ -155,10 +152,8 @@ def get_positions(kite):
         data = data.sort_index(ascending=True)
         positions = data
     except Exception as e:
-        print(e)
+        logging.info("Excel creation failed: {}".format(e))
         pass
-    print("some...")
-    print(positions)
     return positions
 
 
@@ -225,11 +220,20 @@ def load_positions():
             excel_obj.wb.sheets.add(users_obj[i].userid + '_positions')
 
         try:
-            excel_obj.wb.sheets(users_obj[i].userid + "_positions").range("a1").value = get_positions(users_obj[i].kite)
+            positions = get_positions(users_obj[i].kite)
+            # print(positions.info())
+            all_postions_mtm = positions['M2M'].sum()
+            print(all_postions_mtm)
+            positions.loc["Total", "M2M"] = positions.M2M.sum()
+            positions.loc["Total", "Pnl"] = positions.Pnl.sum()
+
+            excel_obj.wb.sheets(users_obj[i].userid + "_positions").range("a1").value = positions
         except Exception as e:
             logging.info("Error on get positions: {}".format(e))
 
 
 if __name__ == '__main__':
     load_orderbook()
-    load_positions()
+    while True:
+        load_positions()
+        time.sleep(5)
