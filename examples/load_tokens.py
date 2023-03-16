@@ -39,7 +39,7 @@ def load_all_tokens():
         logging.info("==========================")
         return valid_user_obj
     except Exception as e:
-        print(e)
+        logging.info("Error on load_all_tokens function: {}".format(e))
 
 
 class LoadAllUsers:
