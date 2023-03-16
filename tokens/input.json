@@ -1,0 +1,20 @@
+{
+   "broker": "zerodha",
+   "user_lists": [
+      {
+         "nickname": "userA",
+         "userid": "YQ4355",
+         "enctoken": "nUNP8asdfauF28PthfdFuUb0lsdfasdfaufnqsOwFZAcs/uMedTJRMin6g=="
+      },
+      {
+         "nickname": "userB",
+         "userid": "BA1234",
+         "enctoken": "nUNPasdfas0491XQC+vMg5arNUNPuF28PthfdFuUbasdfasdfascs/uMedTJRMin6g=="
+      },
+      {
+         "nickname": "userC",
+         "userid": "CCJ1234",
+         "enctoken": "nUNP83saddfasdfufnqsOwFZAcs/uMedTJRMin6g=="
+      }
+   ]
+}
