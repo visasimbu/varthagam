@@ -12,7 +12,7 @@ from getinstruments import get_instrument_list
 logging.basicConfig(filename='mylog', level=logging.DEBUG)
 
 kite = KiteConnect(enc_token=
-                   "M3QlswK5Vtoyfj9SnUap/z6B4bdkHHZ/8773pqnGo4yPJTzLDvSrujmWoA8D67hrxWCaj2EBGpV3xAaJlgoJ8jcUbReu/zQt4dJ9vklTSOAKPJ3g54k/YA==")
+                   "cpTNh3/uYNqEIl0oMwYRSJtphUxXeTRU9WbV2HbA73AYeU2boXpIxiwOhi2S9aihMBotk2uR6CUP9NNCkAGAOycd4RJoRI9lBDp5Hfot5YTEKQYoZLO13Q==")
 excel_workbook = 'F:\SIMBU\Python\Trading\Zerodha\TradeOn.xlsx'
 
 
@@ -48,29 +48,81 @@ excel_workbook = 'F:\SIMBU\Python\Trading\Zerodha\TradeOn.xlsx'
 #     print('inside exception')
 #     logging.info("Order placement failed: {}".format(e))
 
-def get_orderbook():
-    global orders
-    try:
-        orders
-    except:
-        orders = {}
-    try:
-        print('In getting order book')
-        data = pd.DataFrame(kite.orders())
-        print(data)
-        # data = data[data["tag"] == "FromPython"]
-        data = data.filter(
-            ["order_timestamp", "exchange", "tradingsymbol", "transaction_type", "quantity", "average_price", "status",
-             "status_message_raw"])
-        data.columns = data.columns.str.replace("_", " ")
-        data.columns = data.columns.str.title()
-        data = data.set_index(["Order Timestamp"], drop=True)
-        data = data.sort_index(ascending=True)
-        orders = data
-    except Exception as e:
-        # print(e)
-        pass
-    return orders
+class ExcelTrade(object):
+    def __init__(self,
+                 kite,
+                 debug=False):
+
+        self.orders = None
+        self.debug = debug
+
+        self.kite = kite
+        # self.live_date = live_data
+
+        logging.info("Excel starting...")
+        # Create Excel file if not available.
+        if not os.path.exists(excel_workbook):
+            try:
+                self.wb = xw.Book()
+                self.wb.save(excel_workbook)
+                self.wb.close()
+            except Exception as e:
+                logging.info("Excel creation failed: {}".format(e))
+                sys.exit()
+        # Add the sheet
+        self.wb = xw.Book(excel_workbook)
+        for i in ["Data", "Exchange", "orderBook"]:
+            try:
+                self.wb.sheets(i)
+            except:
+                self.wb.sheets.add(i)
+        # Initialize sheet Variable
+        self.dt = self.wb.sheets("Data")
+        self.ex = self.wb.sheets("Exchange")
+        self.ob = self.wb.sheets("orderBook")
+        # Clean the data in all 3 sheets in Excel file
+        self.ex.range("a:j").value = self.ob.range("a:h").value = self.dt.range("p:q").value = None
+        # Initialize data sheet with column name
+        self.dt.range(f"a1:q1").value = ["Sr No", "Symbol", "Open", "High", "Low", "LTP", "volume", "Vwap", "Best Bid Price",
+                                    "Best Ask Price", "Close", "Qty", "Direction", "Entry Signal", "Exit Signal",
+                                    "Entry",
+                                    "Exit"]
+        # For all the instruments.
+        # ex.range("a1").value = get_instrument_list()
+        self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
+        logging.info("Excel started  !!! Start your trading")
+
+    def get_orderbook(self):
+        # global orders
+        try:
+            self.orders
+        except:
+            self.orders = {}
+        try:
+            print('In getting order book')
+            data = pd.DataFrame(kite.orders())
+            print(data.info())
+            # data = data[data["tag"] == "FromPython"]
+            data = data.filter(
+                ["order_timestamp", "exchange", "tradingsymbol", "transaction_type", "quantity", "average_price",
+                 "trigger_price","filled_quantity","pending_quantity","cancelled_quantity",
+                 "market_protection",
+                 # "meta",
+                 "tag","guid",
+                 "status",
+                 "status_message_raw"]
+                )
+
+
+            data.columns = data.columns.str.replace("_", " ")
+            data.columns = data.columns.str.title()
+            # data = data.set_index(["Order Timestamp"], drop=True)
+            data = data.sort_index(ascending=True)
+            self.orders = data
+        except Exception as e:
+            print(e)
+            pass
+        return self.orders
 
 
 def start_excel():
@@ -109,5 +161,8 @@ def start_excel():
     logging.info("Excel started  !!! Start your trading")
 
 
+
 if __name__ == '__main__':
-    start_excel()
+    # start_excel()
+    excelTrade = ExcelTrade(kite)
+    excelTrade.ob.range("a1").value = excelTrade.get_orderbook()

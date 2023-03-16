@@ -7,7 +7,7 @@ import pandas as pd
 import xlwings as xw
 from kiteconnect import KiteConnect
 
-logging.basicConfig(filename='mylog', level=logging.DEBUG)
+logging.basicConfig(filename='../log/mylog.log', level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

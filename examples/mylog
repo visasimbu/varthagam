@@ -1,9 +1,0 @@
-INFO:root:Excel starting...
-DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.kite.trade:443
-INFO:root:REST API to get Instrument failed. Retry in 1 sec !!!
-DEBUG:urllib3.connectionpool:Starting new HTTPS connection (2): api.kite.trade:443
-INFO:root:REST API to get Instrument failed. Retry in 1 sec !!!
-DEBUG:urllib3.connectionpool:Starting new HTTPS connection (3): api.kite.trade:443
-DEBUG:urllib3.connectionpool:https://api.kite.trade:443 "GET /instruments/NFO HTTP/1.1" 200 579715
-INFO:root:2864 rows of instruments is pulled and saved in exchange sheet!!!
-INFO:root:Excel started  !!! Start your trading
