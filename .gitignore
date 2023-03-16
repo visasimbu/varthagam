@@ -186,4 +186,4 @@ cov_html
 .idea
 
 #Don't include credential files
-/tokens/input.json
+/tokens
