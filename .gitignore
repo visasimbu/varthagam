@@ -185,3 +185,5 @@ cov_html
 #IDEA
 .idea
 
+#Don't include credential files
+tokens/input.json
