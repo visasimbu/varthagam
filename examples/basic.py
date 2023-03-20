@@ -216,18 +216,32 @@ def load_positions():
         logging.info("Get the position for :" + users_obj[i].userid)
         try:
             excel_obj.wb.sheets(users_obj[i].userid + '_positions')
+            excel_obj.wb.sheets(users_obj[i].userid + '_positionsChart')
         except:
             excel_obj.wb.sheets.add(users_obj[i].userid + '_positions')
+            excel_obj.wb.sheets.add(users_obj[i].userid + '_positionsChart')
 
         try:
             positions = get_positions(users_obj[i].kite)
             # print(positions.info())
             all_postions_mtm = positions['M2M'].sum()
-            print(all_postions_mtm)
-            positions.loc["Total", "M2M"] = positions.M2M.sum()
-            positions.loc["Total", "Pnl"] = positions.Pnl.sum()
+            all_postions_pnl = positions['Pnl'].sum()
 
-            excel_obj.wb.sheets(users_obj[i].userid + "_positions").range("a1").value = positions
+            positions.loc["Total", "M2M"] = all_postions_mtm
+            positions.loc["Total", "Pnl"] = all_postions_pnl
+
+            excel_obj.wb.sheets(users_obj[i].userid + "_positions").range("a1").options(index=False).value = positions
+
+            sum_positions = pd.DataFrame({"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl]})
+            # print(sum_positions)
+            # print(positions)
+
+            rng = excel_obj.wb.sheets.add(users_obj[i].userid + '_positionsChart').range("a1").last_cell
+            # print(rng)
+            excel_obj.wb.sheets(users_obj[i].userid + "_positionsChart").range(rng).value = sum_positions
+
+            # excel_obj.wb.sheets(users_obj[i].userid + '_positionsChart').range("a1").value = sum_positions
+
         except Exception as e:
             logging.info("Error on get positions: {}".format(e))
 
@@ -235,5 +249,9 @@ def load_positions():
 if __name__ == '__main__':
     load_orderbook()
     while True:
+        if (len(users_obj)) == 0:
+            logging.info("No valid user available. Update the credentials in tokens/input.json file ")
+            print("No valid user available. Update the credentials in tokens/input.json file")
+            break
         load_positions()
-        time.sleep(5)
+        time.sleep(15)
