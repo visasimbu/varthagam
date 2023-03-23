@@ -1,5 +1,6 @@
 import json
 import logging
+import pandas as pd
 from kiteconnect import KiteConnect
 
 logging.basicConfig(filename='../log/loadtoken.log', level=logging.DEBUG)
@@ -10,10 +11,10 @@ def load_all_tokens():
     try:
         with open('../tokens/input.json', 'r') as json_file:
             data = json.load(json_file)
-
         obj_holder = [LoadAllUsers(data["user_lists"][each_user_index]["nickname"],
                                    data["user_lists"][each_user_index]["userid"],
-                                   data["user_lists"][each_user_index]["enctoken"]) for each_user_index in
+                                   data["user_lists"][each_user_index]["enctoken"]
+                                   ) for each_user_index in
                       range(len(data["user_lists"]))]
 
         for json_data_index in range(len(data["user_lists"])):
@@ -48,6 +49,8 @@ class LoadAllUsers:
         self.userid = userid
         self.enctoken = enctoken
         self.is_valid_user = False
+        self.positions = pd.DataFrame({})
+        self.sum_positions = pd.DataFrame({})
         self.kite = KiteConnect(enc_token=enctoken)
 
     def validate_users_credentials(self):

@@ -87,6 +87,7 @@ class ExcelTrade:
                                          "Exit"]
         # For all the instruments.
         # ex.range("a1").value = get_instrument_list()
+        # commented for temp simbu
         self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
         logging.info("Excel started  !!! Start your trading")
 
@@ -138,12 +139,12 @@ def get_positions(kite):
         # data = data[data["tag"] == "FromPython"]
         data = data.filter(
             ["tradingsymbol",
-             "quantity","overnight_quantity","multiplier","average_price",
-             "close_price","last_price","value","pnl","m2m","unrealised",
-             "realised","buy_quantity","buy_price","buy_value",
-             "buy_m2m","sell_quantity","sell_price","sell_value","sell_m2m",
-             "day_buy_quantity","day_buy_price","day_buy_value","day_sell_quantity",
-             "day_sell_price","day_sell_value"]
+             "quantity", "overnight_quantity", "multiplier", "average_price",
+             "close_price", "last_price", "value", "pnl", "m2m", "unrealised",
+             "realised", "buy_quantity", "buy_price", "buy_value",
+             "buy_m2m", "sell_quantity", "sell_price", "sell_value", "sell_m2m",
+             "day_buy_quantity", "day_buy_price", "day_buy_value", "day_sell_quantity",
+             "day_sell_price", "day_sell_value"]
         )
 
         data.columns = data.columns.str.replace("_", " ")
@@ -195,6 +196,8 @@ def get_positions(kite):
 
 excel_obj = ExcelTrade()
 users_obj = load_all_tokens()
+if users_obj is None:
+    users_obj = []
 
 
 def load_orderbook():
@@ -213,45 +216,58 @@ def load_orderbook():
 
 def load_positions():
     for i in range(len(users_obj)):
-        logging.info("Get the position for :" + users_obj[i].userid)
+        current_user = users_obj[i]
+        logging.info("Get the position for :" + current_user.userid)
         try:
-            excel_obj.wb.sheets(users_obj[i].userid + '_positions')
+            excel_obj.wb.sheets(current_user.userid + '_positions')
             excel_obj.wb.sheets(users_obj[i].userid + '_positionsChart')
         except:
-            excel_obj.wb.sheets.add(users_obj[i].userid + '_positions')
-            excel_obj.wb.sheets.add(users_obj[i].userid + '_positionsChart')
+            excel_obj.wb.sheets.add(current_user.userid + '_positions')
+            excel_obj.wb.sheets.add(current_user.userid + '_positionsChart')
 
         try:
-            positions = get_positions(users_obj[i].kite)
-            # print(positions.info())
-            all_postions_mtm = positions['M2M'].sum()
-            all_postions_pnl = positions['Pnl'].sum()
 
-            positions.loc["Total", "M2M"] = all_postions_mtm
-            positions.loc["Total", "Pnl"] = all_postions_pnl
+            current_user.positions = get_positions(current_user.kite)
 
-            excel_obj.wb.sheets(users_obj[i].userid + "_positions").range("a1").options(index=False).value = positions
+            all_postions_mtm = current_user.positions['M2M'].sum()
+            all_postions_pnl = current_user.positions['Pnl'].sum()
 
-            sum_positions = pd.DataFrame({"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl]})
-            # print(sum_positions)
-            # print(positions)
+            current_user.positions.loc["Total", "M2M"] = all_postions_mtm
+            current_user.positions.loc["Total", "Pnl"] = all_postions_pnl
 
-            rng = excel_obj.wb.sheets.add(users_obj[i].userid + '_positionsChart').range("a1").last_cell
+            excel_obj.wb.sheets(current_user.userid + "_positions").range("a1").value = current_user.positions
+
+            # now = datetime.datetime.now()
+            # datetime.datetime(2009, 1, 6, 15, 8, 24, 78915)
+            # print(now)
+
+            if (len(current_user.sum_positions.index)) == 0:
+                logging.info('sum positions is none')
+                current_user.sum_positions = pd.DataFrame({"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl]})
+            else:
+                logging.info('sum positions is NOT none')
+                current_user.sum_positions.loc[len(current_user.sum_positions.index)] = [all_postions_mtm, all_postions_pnl]
+
+            # rng = excel_obj.wb.sheets(current_user.userid + '_positionsChart').cells.last_cell
             # print(rng)
-            excel_obj.wb.sheets(users_obj[i].userid + "_positionsChart").range(rng).value = sum_positions
+            # excel_obj.wb.sheets(current_user.userid + "_positionsChart").range(rng).value = current_user.sum_positions
 
-            # excel_obj.wb.sheets(users_obj[i].userid + '_positionsChart').range("a1").value = sum_positions
+            excel_obj.wb.sheets(current_user.userid + '_positionsChart').range("a1").value = current_user.sum_positions
 
         except Exception as e:
             logging.info("Error on get positions: {}".format(e))
 
 
 if __name__ == '__main__':
-    load_orderbook()
+    if (len(users_obj)) == 0:
+        logging.info("No valid user available. Update the credentials in tokens/input.json file ")
+        print("No valid user available. Update the credentials in tokens/input.json file")
+    else:
+        load_orderbook()
     while True:
         if (len(users_obj)) == 0:
             logging.info("No valid user available. Update the credentials in tokens/input.json file ")
             print("No valid user available. Update the credentials in tokens/input.json file")
             break
         load_positions()
-        time.sleep(15)
+        time.sleep(2)
