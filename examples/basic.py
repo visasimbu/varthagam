@@ -88,7 +88,7 @@ class ExcelTrade:
         # For all the instruments.
         # ex.range("a1").value = get_instrument_list()
         # commented for temp simbu
-        self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
+        # self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
         logging.info("Excel started  !!! Start your trading")
 
 
@@ -229,30 +229,33 @@ def load_positions():
 
             current_user.positions = get_positions(current_user.kite)
 
-            all_postions_mtm = current_user.positions['M2M'].sum()
-            all_postions_pnl = current_user.positions['Pnl'].sum()
-
-            current_user.positions.loc["Total", "M2M"] = all_postions_mtm
-            current_user.positions.loc["Total", "Pnl"] = all_postions_pnl
-
-            excel_obj.wb.sheets(current_user.userid + "_positions").range("a1").value = current_user.positions
-
-            # now = datetime.datetime.now()
+            now = datetime.datetime.now()
+            print(now)
             # datetime.datetime(2009, 1, 6, 15, 8, 24, 78915)
             # print(now)
 
-            if (len(current_user.sum_positions.index)) == 0:
-                logging.info('sum positions is none')
-                current_user.sum_positions = pd.DataFrame({"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl]})
+            if (len(current_user.positions.index)) != 0:
+                all_postions_mtm = current_user.positions['M2M'].sum()
+                all_postions_pnl = current_user.positions['Pnl'].sum()
+                current_user.positions.loc["Total", "M2M"] = all_postions_mtm
+                current_user.positions.loc["Total", "Pnl"] = all_postions_pnl
+                excel_obj.wb.sheets(current_user.userid + "_positions").range("a1").value = current_user.positions
+                if (len(current_user.sum_positions.index)) == 0:
+                    logging.info('sum positions is none')
+                    current_user.sum_positions = pd.DataFrame(
+                        {"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl], "Time": [now]})
+                else:
+                    logging.info('sum positions is NOT none')
+                    current_user.sum_positions.loc[len(current_user.sum_positions.index)] = [all_postions_mtm,
+                                                                                             all_postions_pnl, now]
+                excel_obj.wb.sheets(current_user.userid + '_positionsChart').range(
+                    "a1").value = current_user.sum_positions
             else:
-                logging.info('sum positions is NOT none')
-                current_user.sum_positions.loc[len(current_user.sum_positions.index)] = [all_postions_mtm, all_postions_pnl]
+                logging.info('There is no positions for the given user :' + current_user.userid)
 
             # rng = excel_obj.wb.sheets(current_user.userid + '_positionsChart').cells.last_cell
             # print(rng)
             # excel_obj.wb.sheets(current_user.userid + "_positionsChart").range(rng).value = current_user.sum_positions
-
-            excel_obj.wb.sheets(current_user.userid + '_positionsChart').range("a1").value = current_user.sum_positions
 
         except Exception as e:
             logging.info("Error on get positions: {}".format(e))
@@ -270,4 +273,4 @@ if __name__ == '__main__':
             print("No valid user available. Update the credentials in tokens/input.json file")
             break
         load_positions()
-        time.sleep(2)
+        time.sleep(5)
