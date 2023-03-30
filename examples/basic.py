@@ -5,6 +5,7 @@ import sys
 import time
 import pandas as pd
 import xlwings as xw
+import matplotlib.pyplot as plt
 
 from kiteconnect import KiteConnect
 from getinstruments import get_instrument_list
@@ -88,7 +89,7 @@ class ExcelTrade:
         # For all the instruments.
         # ex.range("a1").value = get_instrument_list()
         # commented for temp simbu
-        # self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
+        self.ex.range("a1").value = get_instrument_list(kite, "NFO-OPT", 2, [2023], ['NIFTY', 'BANKNIFTY', 'FINNIFTY'])
         logging.info("Excel started  !!! Start your trading")
 
 
@@ -226,26 +227,29 @@ def load_positions():
             excel_obj.wb.sheets.add(current_user.userid + '_positionsChart')
 
         try:
-
+            current_user.positions = None
             current_user.positions = get_positions(current_user.kite)
 
             now = datetime.datetime.now()
-            print(now)
+            logging.info(now)
             # datetime.datetime(2009, 1, 6, 15, 8, 24, 78915)
             # print(now)
 
             if (len(current_user.positions.index)) != 0:
-                all_postions_mtm = current_user.positions['M2M'].sum()
-                all_postions_pnl = current_user.positions['Pnl'].sum()
+                all_postions_mtm = None
+                all_postions_pnl = None
+                all_postions_mtm = round(current_user.positions['M2M'].sum())
+                all_postions_pnl = round(current_user.positions['Pnl'].sum())
                 current_user.positions.loc["Total", "M2M"] = all_postions_mtm
                 current_user.positions.loc["Total", "Pnl"] = all_postions_pnl
+                logging.info(round(current_user.positions['M2M'].sum()))
+                logging.info(round(current_user.positions['M2M'].sum()))
+
                 excel_obj.wb.sheets(current_user.userid + "_positions").range("a1").value = current_user.positions
                 if (len(current_user.sum_positions.index)) == 0:
-                    logging.info('sum positions is none')
                     current_user.sum_positions = pd.DataFrame(
                         {"M2M": [all_postions_mtm], "Pnl": [all_postions_pnl], "Time": [now]})
                 else:
-                    logging.info('sum positions is NOT none')
                     current_user.sum_positions.loc[len(current_user.sum_positions.index)] = [all_postions_mtm,
                                                                                              all_postions_pnl, now]
                 excel_obj.wb.sheets(current_user.userid + '_positionsChart').range(
@@ -261,6 +265,20 @@ def load_positions():
             logging.info("Error on get positions: {}".format(e))
 
 
+def positions_graph():
+    for i in range(len(users_obj)):
+        current_user = users_obj[i]
+        logging.info("Plot the position graph for :" + current_user.userid)
+        try:
+            fig, ax = plt.subplots()
+            ax.plot(current_user.sum_positions["Time"],current_user.sum_positions["M2M"])
+            plt.ylabel = ('timestamp')
+            plt.xlabel = ('M2M')
+            plt.show()
+        except Exception as e:
+            logging.info("Error on position graph: {}".format(e))
+
+
 if __name__ == '__main__':
     if (len(users_obj)) == 0:
         logging.info("No valid user available. Update the credentials in tokens/input.json file ")
@@ -273,4 +291,5 @@ if __name__ == '__main__':
             print("No valid user available. Update the credentials in tokens/input.json file")
             break
         load_positions()
-        time.sleep(5)
+        # positions_graph()
+        time.sleep(50)
